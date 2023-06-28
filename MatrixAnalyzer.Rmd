@@ -1,0 +1,63 @@
+---
+title: "MatrixAnalyzer"
+author: "Noah Willhite"
+date: "2023-06-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+data <- read.csv("Dummy Data.csv", colClasses = c(Code = "character"))
+library(tidyverse)
+library(pracma)
+library(stringr)
+```
+
+```{r}
+library(dplyr)
+
+data <- data %>%
+  mutate(Adjacent = NA)
+
+i.indices <- c(2, 3, 4)
+j.indices <- c(2, 3, 4)
+
+for (k in 1:nrow(data)) {
+  # Add commas between numbers
+  cstring <- gsub("(\\d)", "\\1,", data[k, 2], perl = TRUE)
+  cstring <- substr(cstring, 1, nchar(cstring) - 1)
+
+  #Arrange numbers in a 3x3 matrix
+  numbers <- scan(text = cstring, sep = ",", quiet = TRUE)
+  matoriginal <- matrix(numbers, nrow = 3, ncol = 3, byrow = TRUE)
+  
+  mat <- matrix(0, nrow = 5, ncol = 5)  # Zero pad to prevent out of bounds indices
+  mat[2:4, 2:4] <- matoriginal #Paste in previous matrix to center of zero matrix
+
+  # Set adjacent counter to 0
+  count <- 0
+  
+  for (i in i.indices) {
+    for (j in j.indices) {
+      if (mat[i, j] == 1) {
+        adj_sum <- mat[i, j + 1] + mat[i, j - 1] + mat[i - 1, j] + mat[i + 1, j] 
+        
+        if (adj_sum == 2) {
+          data[k, "Adjacent"] <- 1
+          count <- count + 1
+          break
+        }
+      }
+    }
+    
+    if (count > 0) {
+      break
+    }
+  }
+  
+  if (count == 0) {
+    data[k, "Adjacent"] <- 0
+  }
+}
+
+```
